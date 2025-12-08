@@ -35,9 +35,6 @@ export default function WishListForm({ onSubmit, santaName, assignedSanta, onBac
   const [isLoading, setIsLoading] = useState(false)
   const [updatingIndex, setUpdatingIndex] = useState<number | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [santaWishList, setSantaWishList] = useState<string[]>([])
-  const [showSantaWishList, setShowSantaWishList] = useState(false)
-  const [loadingSantaWishList, setLoadingSantaWishList] = useState(false)
 
   // Fetch current wishlist on mount
   useEffect(() => {
@@ -67,37 +64,6 @@ export default function WishListForm({ onSubmit, santaName, assignedSanta, onBac
 
     fetchCurrentWishlist()
   }, [])
-
-  const fetchSantaWishList = async () => {
-    if (!assignedSanta) return
-
-    setLoadingSantaWishList(true)
-    try {
-      const response = await fetch("/api/get-wishlist-by-name", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personName: assignedSanta }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.wishList && Array.isArray(data.wishList)) {
-          setSantaWishList(data.wishList.filter((w: string) => w.trim()))
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching secret santa wishlist:", error)
-    } finally {
-      setLoadingSantaWishList(false)
-    }
-  }
-
-  const handleViewSantaWishList = () => {
-    if (!showSantaWishList && santaWishList.length === 0) {
-      fetchSantaWishList()
-    }
-    setShowSantaWishList(!showSantaWishList)
-  }
 
   const handleWishChange = (index: number, value: string) => {
     const newWishes = [...inputWishes]
@@ -156,42 +122,6 @@ export default function WishListForm({ onSubmit, santaName, assignedSanta, onBac
         >
           ← Back to Secret Santa
         </button>
-      )}
-
-      {/* Secret Santa Wish List Section */}
-      {assignedSanta && (
-        <div className="mb-6 p-4 bg-secondary/10 rounded-lg border-2 border-secondary">
-          <button
-            onClick={handleViewSantaWishList}
-            disabled={loadingSantaWishList}
-            className="w-full text-left flex items-center justify-between"
-          >
-            <span className="font-semibold text-secondary">
-              {showSantaWishList ? "Hide" : "View"} {assignedSanta}'s Wish List
-            </span>
-            <span className="text-secondary">{showSantaWishList ? "▲" : "▼"}</span>
-          </button>
-          
-          {showSantaWishList && (
-            <div className="mt-4 pt-4 border-t-2 border-secondary/20">
-              {loadingSantaWishList ? (
-                <p className="text-sm text-foreground/60">Loading...</p>
-              ) : santaWishList.length > 0 ? (
-                <div className="space-y-2">
-                  {santaWishList.map((wish, index) => (
-                    <div key={index} className="text-sm text-foreground/90">
-                      <span className="font-semibold">Priority {index + 1}:</span> {wish}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-foreground/60">
-                  {assignedSanta} hasn't added their wish list yet.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
       )}
 
       {/* Display Current Wishes */}
