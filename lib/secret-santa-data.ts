@@ -8,7 +8,7 @@
  */
 
 import { FAMILY_MEMBERS } from "./family-members"
-import { loadData, saveData, clearData, type PersistenceData } from "./persistence"
+import { loadData, saveData, type PersistenceData } from "./persistence"
 
 // Dictionary: password -> family member name
 export const passwords: Record<string, string> = {}
@@ -18,6 +18,8 @@ export const secretSanta: Record<string, [string, string[]]> = {}
 
 // Track initialization state
 let isInitialized = false
+
+let initializationPromise: Promise<void> | null = null
 
 /**
  * ADMIN FUNCTION: Initialize Secret Santa assignments
@@ -48,16 +50,6 @@ export async function initializeSecretSanta(familyMembers: string[]): Promise<vo
   Object.keys(passwords).forEach(key => delete passwords[key])
   Object.keys(secretSanta).forEach(key => delete secretSanta[key])
 
-  // Generate random 8 character password for each person
-  function generatePassword(): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let password = ''
-    for (let i = 0; i < 8; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return password
-  }
-
   // Assign secret santas using the queue
   for (const person of familyMembers) {
     let assigned = false
@@ -80,9 +72,8 @@ export async function initializeSecretSanta(familyMembers: string[]): Promise<vo
       }
     }
 
-    // Generate a random 8 character password
-    const password = generatePassword()
-    passwords[password] = person
+    // Use person's name as password
+    passwords[person] = person
   }
 
   // Save to disk/KV so data persists across server restarts
@@ -92,73 +83,6 @@ export async function initializeSecretSanta(familyMembers: string[]): Promise<vo
     lastInitialized: new Date().toISOString(),
   }
   await saveData(data)
-}
-
-/**
- * ADMIN FUNCTION: Generate Secret Santa assignments (returns data without modifying)
- * Used for preview/generation purposes
- */
-export function generateSecretSantaAssignments(familyMembers: string[]): {
-  passwords: Record<string, string>
-  secretSanta: Record<string, [string, string[]]>
-} {
-  // Validate input
-  if (familyMembers.length < 2) {
-    throw new Error("Need at least 2 family members for Secret Santa")
-  }
-
-  // Create a queue with all family members and randomize it once
-  const queue = [...familyMembers]
-  for (let i = queue.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[queue[i], queue[j]] = [queue[j], queue[i]]
-  }
-
-  // Generate the data structures
-  const passwords: Record<string, string> = {}
-  const secretSanta: Record<string, [string, string[]]> = {}
-
-  // Generate random 8 character password for each person
-  function generatePassword(): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let password = ''
-    for (let i = 0; i < 8; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return password
-  }
-
-  // Assign secret santas using the queue
-  for (const person of familyMembers) {
-    let assigned = false
-    
-    // Keep popping from queue until we find a valid assignment
-    while (!assigned) {
-      const candidate = queue.shift()
-      
-      if (!candidate) {
-        throw new Error("Unable to create valid Secret Santa assignments")
-      }
-
-      // If it's not the same person, assign it
-      if (candidate !== person) {
-        secretSanta[person] = [candidate, []]
-        assigned = true
-      } else {
-        // Otherwise add it to the bottom of the queue
-        queue.push(candidate)
-      }
-    }
-
-    // Generate a random 8 character password
-    const password = generatePassword()
-    passwords[password] = person
-  }
-
-  return {
-    passwords: passwords,
-    secretSanta: secretSanta,
-  }
 }
 
 /**

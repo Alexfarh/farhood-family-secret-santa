@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 
 interface PasswordEntryProps {
-  onSubmit: (password: string, name: string) => void
+  onSubmit: (password: string) => void
 }
 
 export default function PasswordEntry({ onSubmit }: PasswordEntryProps) {
@@ -18,7 +18,7 @@ export default function PasswordEntry({ onSubmit }: PasswordEntryProps) {
 
     setIsLoading(true)
     try {
-      await onSubmit(password, "user")
+      await onSubmit(password)
     } finally {
       setIsLoading(false)
     }

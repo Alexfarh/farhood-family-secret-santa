@@ -7,7 +7,6 @@ import WishListForm from "./wish-list-form"
 export default function SecretSantaFlow() {
   const [stage, setStage] = useState<"password" | "reveal" | "wishlist">("password")
   const [assignedSanta, setAssignedSanta] = useState<string | null>(null)
-  const [userPassword, setUserPassword] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [santaWishList, setSantaWishList] = useState<string[]>([])
   const [loadingSantaWishList, setLoadingSantaWishList] = useState(false)
@@ -43,7 +42,7 @@ export default function SecretSantaFlow() {
     }
   }
 
-  const handlePasswordSubmit = async (password: string, participantName: string) => {
+  const handlePasswordSubmit = async (password: string) => {
     const response = await fetch("/api/verify-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,7 +54,6 @@ export default function SecretSantaFlow() {
     if (data.success) {
       setAssignedSanta(data.assignedSanta)
       setUserName(data.personName || null)
-      setUserPassword(password)
       setStage("reveal")
     } else {
       // Display the error message from the API
@@ -136,7 +134,6 @@ export default function SecretSantaFlow() {
         <WishListForm 
           onSubmit={handleWishListSubmit} 
           santaName={userName}
-          assignedSanta={assignedSanta}
           onBack={() => setStage("reveal")}
         />
       )}

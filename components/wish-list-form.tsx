@@ -7,7 +7,6 @@ import { useState, useEffect } from "react"
 interface WishListFormProps {
   onSubmit: (wishList: string[]) => void
   santaName?: string | null
-  assignedSanta?: string | null
   onBack?: () => void
 }
 
@@ -29,7 +28,7 @@ const getPlaceholder = (index: number): string => {
 }
 
 
-export default function WishListForm({ onSubmit, santaName, assignedSanta, onBack }: WishListFormProps) {
+export default function WishListForm({ onSubmit, santaName, onBack }: WishListFormProps) {
   const [currentWishes, setCurrentWishes] = useState<string[]>(["", "", "", "", ""])
   const [inputWishes, setInputWishes] = useState<string[]>(["", "", "", "", ""])
   const [isLoading, setIsLoading] = useState(false)
