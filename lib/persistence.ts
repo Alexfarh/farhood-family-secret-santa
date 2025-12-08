@@ -19,9 +19,12 @@ if (USE_VERCEL_KV) {
   try {
     const { kv: vercelKv } = require("@vercel/kv")
     kv = vercelKv
+    console.log("✅ Vercel KV initialized (KV_URL found)")
   } catch (e) {
     console.error("Failed to import @vercel/kv:", e)
   }
+} else {
+  console.log("⚠️ KV_URL not found - using local file storage")
 }
 
 // Use a data directory in the project root (for local development)
