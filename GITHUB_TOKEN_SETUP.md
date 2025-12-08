@@ -10,7 +10,6 @@ To enable automatic git commits when wishlists are updated, you need to add a Gi
    - Give it a name like "Vercel Auto-Commit"
    - Select scopes:
      - `repo` (full control of private repositories)
-     - `workflow` (update GitHub Action workflows)
    - Click "Generate token"
    - **Copy the token** (you won't be able to see it again)
 
@@ -31,9 +30,10 @@ To enable automatic git commits when wishlists are updated, you need to add a Gi
 ## How It Works
 
 1. Someone submits a wishlist on your site
-2. The API saves it to `data/secret-santa.json`
-3. The API triggers a GitHub Action via the `GITHUB_TOKEN`
-4. The GitHub Action automatically commits the changes to git
-5. Vercel automatically redeploys with the updated data
+2. The API updates the in-memory data
+3. The API directly commits the changes to GitHub via the GitHub API
+4. The updated `data/secret-santa.json` is now in git
+5. Next Vercel redeploy will pull the latest data
 
 **No manual commits needed!** 🎉
+

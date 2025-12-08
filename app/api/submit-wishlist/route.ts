@@ -1,4 +1,4 @@
-import { setWishList } from "@/lib/secret-santa-data"
+import { setWishList, secretSanta, passwords } from "@/lib/secret-santa-data"
 import { cookies } from "next/headers"
 
 export async function POST(request: Request) {
@@ -24,28 +24,68 @@ export async function POST(request: Request) {
 
     console.log("Wish list submitted:", { person, wishList })
 
-    // Trigger GitHub Action to auto-commit the changes
+    // Commit changes to GitHub directly via GitHub API
     if (process.env.GITHUB_TOKEN) {
       try {
-        await fetch(
-          "https://api.github.com/repos/alexfarh/farhood-family-secret-santa/dispatches",
+        console.log("🔄 Attempting to commit to GitHub...")
+        
+        // Prepare the data to commit
+        const data = {
+          passwords: { ...passwords },
+          secretSanta: { ...secretSanta },
+          lastInitialized: new Date().toISOString(),
+        }
+        
+        const fileContent = JSON.stringify(data, null, 2)
+        const encodedContent = Buffer.from(fileContent).toString('base64')
+
+        // Get the current file SHA (needed for GitHub API)
+        const getResponse = await fetch(
+          "https://api.github.com/repos/alexfarh/farhood-family-secret-santa/contents/data/secret-santa.json",
           {
-            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+              "X-GitHub-Api-Version": "2022-11-28",
+            },
+          }
+        )
+
+        let sha: string | null = null
+        if (getResponse.ok) {
+          const fileData = await getResponse.json()
+          sha = fileData.sha
+        }
+
+        // Update the file on GitHub
+        const updateResponse = await fetch(
+          "https://api.github.com/repos/alexfarh/farhood-family-secret-santa/contents/data/secret-santa.json",
+          {
+            method: "PUT",
             headers: {
               Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
               "X-GitHub-Api-Version": "2022-11-28",
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              event_type: "wishlist-updated",
+              message: "Update wishlists",
+              content: encodedContent,
+              ...(sha && { sha }),
             }),
           }
         )
-        console.log("✅ Triggered GitHub Action to auto-commit changes")
+
+        if (updateResponse.ok) {
+          console.log("✅ Successfully committed changes to GitHub")
+        } else {
+          const errorText = await updateResponse.text()
+          console.error("❌ Failed to commit to GitHub:", updateResponse.status, errorText)
+        }
       } catch (error) {
-        console.error("Failed to trigger GitHub Action:", error)
-        // Don't fail the request if the trigger fails
+        console.error("❌ Error committing to GitHub:", error)
+        // Don't fail the request if the commit fails
       }
+    } else {
+      console.warn("⚠️ GITHUB_TOKEN not found in environment variables")
     }
 
     return Response.json({ success: true })
